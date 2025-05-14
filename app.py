@@ -36,7 +36,7 @@ site_data = {
 string_kw = 5.6
 plant_kw = 37970
 
-team_members = 2
+team_members = 4
 travel_time_per_day = 240
 safety_procedure_time = 15
 fixed_per_day = travel_time_per_day + safety_procedure_time
