@@ -176,6 +176,7 @@ target_payback_months = col12.slider("Target Payback (months)", 0.5, 12.0, 2.0, 
 dispatch_delay3 = st.slider("Dispatch Delay (days)", 0, 30, 0, key='delay3')
 
 start_date3 = date(year, month3, day3)
+repair_cost_target = repair_costs[strings_down3 - 1]  # Added here
 
 found = False
 for delay in range(dispatch_delay3, 365):
@@ -188,14 +189,17 @@ for delay in range(dispatch_delay3, 365):
         rev_stream.append(rev)
         temp_date += timedelta(days=1)
     cumulative_revenue = np.cumsum(rev_stream)
-    repair_cost = repair_costs[strings_down3 - 1]
-    payback_idx = next((i for i, v in enumerate(cumulative_revenue) if v >= repair_cost), None)
+    payback_idx = next((i for i, v in enumerate(cumulative_revenue) if v >= repair_cost_target), None)
     if payback_idx is not None:
         total_days = delay + payback_idx + 1
         if total_days / 30.44 <= target_payback_months:
-            st.success(f"✅ Repair on {current_date.strftime('%Y-%m-%d')} with payback in {total_days} days ({total_days/30.44:.2f} months)")
+            st.success(f"✅ Repair on {current_date.strftime('%Y-%m-%d')}")
+            st.info(f"⏳ Payback: {total_days} days ({total_days/30.44:.2f} months)")
+            st.info(f"🔢 Strings: {strings_down3}")
+            st.info(f"💰 Repair Cost: ${repair_cost_target:,.0f}")
             found = True
             break
 
 if not found:
     st.error("❌ No repair meets target payback within 1 year horizon.")
+
