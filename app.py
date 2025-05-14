@@ -166,5 +166,4 @@ if optimal_date:
 else:
     st.error(f"❌ No repair meets target payback ≤ {target_payback:.2f} months within 1 year.")
 
-streamlit run app.py
 
