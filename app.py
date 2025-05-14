@@ -123,8 +123,8 @@ fig_payback = go.Figure(go.Scatter(x=string_counts, y=paybacks_months, mode='lin
 fig_payback.update_layout(title=f"Payback vs Strings Down (Start {start_date.strftime('%d-%b-%Y')})", xaxis_title="Strings", yaxis_title="Payback (months)")
 st.plotly_chart(fig_payback, use_container_width=True)
 
-# === Graph 3: Target Payback → Optimal Repair Date ===
-st.header("Target Payback → Optimal Repair Date")
+# === Graph 3: Target Payback → Optimal Repair Date with Visual ===
+st.header("📅 Target Payback → Optimal Repair Date (Graph + Result)")
 col4, col5, col6, col7, col8 = st.columns(5)
 month_tp = col4.slider("Start Month", 1, 12, 5, key="tp_month")
 day_tp = col5.slider("Start Day", 1, 31, 15, key="tp_day")
@@ -134,10 +134,11 @@ dispatch_delay_tp = col8.slider("Dispatch Delay (days)", 0, 30, 0, key="tp_delay
 
 start_date_tp = date(year, month_tp, day_tp)
 repair_cost = repair_costs[strings_tp - 1]
-
 optimal_date = None
+
+rev_stream = []
 for delay_days in range(dispatch_delay_tp, 365):
-    rev_stream = []
+    rev_stream_tmp = []
     shifted_date = start_date_tp + timedelta(days=delay_days)
     month_idx = (shifted_date.year - 2025) * 12 + shifted_date.month - 1
 
@@ -147,15 +148,16 @@ for delay_days in range(dispatch_delay_tp, 365):
         start_day = shifted_date.day if m == month_idx else 1
         for d in range(start_day, days_in_month + 1):
             daily_rev = revenue_per_day[actual_month] * (string_kw / plant_kw) * strings_tp
-            rev_stream.append(daily_rev)
+            rev_stream_tmp.append(daily_rev)
 
-    cumulative_revenue = np.cumsum(rev_stream)
+    cumulative_revenue = np.cumsum(rev_stream_tmp)
     payback_idx = next((i for i, val in enumerate(cumulative_revenue) if val >= repair_cost), None)
     if payback_idx is not None:
         total_days = delay_days + payback_idx + 1
         payback_months = total_days / 30.44
         if payback_months <= target_payback:
             optimal_date = shifted_date
+            rev_stream = rev_stream_tmp
             break
 
 if optimal_date:
@@ -164,6 +166,39 @@ if optimal_date:
     st.info(f"🔢 Strings Down: {strings_tp}")
     st.info(f"💰 Repair Cost: ${repair_cost:,.0f}")
 else:
-    st.error(f"❌ No repair meets target payback ≤ {target_payback:.2f} months within 1 year.")
+    st.error(f"❌ No repair meets target payback ≤ {target_payback:.2f} months within 1 year horizon.")
+
+# === Visual Plot for Graph 3 ===
+if rev_stream:
+    cumulative_revenue = np.cumsum(rev_stream)
+    days_after_repair = np.arange(1, len(cumulative_revenue) + 1)
+    months_after_repair = days_after_repair / 30.44
+
+    fig_tp = go.Figure()
+    fig_tp.add_trace(go.Scatter(
+        x=months_after_repair,
+        y=cumulative_revenue,
+        mode='lines',
+        name='Cumulative Revenue',
+        line=dict(color='green')
+    ))
+
+    fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red',
+                     annotation_text=f'Repair Cost (${repair_cost:,.0f})', annotation_position='top left')
+
+    fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red')
+    fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red')
+
+    fig_tp.update_layout(
+        title="Cumulative Revenue vs Target Payback",
+        xaxis_title="Months After Repair",
+        yaxis_title="Cumulative Revenue (USD)",
+        template='plotly_white',
+        width=1200,
+        height=500
+    )
+
+    st.plotly_chart(fig_tp, use_container_width=True)
+
 
 
