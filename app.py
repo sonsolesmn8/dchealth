@@ -156,7 +156,7 @@ for delay in range(dispatch3, 365):
     month_idx = (shifted_date.year - 2025) * 12 + shifted_date.month - 1
     for m in range(month_idx, 24):
         actual_month = m % 12
-        days_in_month = month_lengths[actual_month]
+        days_in_month = month_lengths[actual_month + 1]
         start_day = shifted_date.day if m == month_idx else 1
         for d in range(start_day, days_in_month + 1):
             daily_rev = revenue_per_day[actual_month] * (string_kw / plant_kw) * strings3
