@@ -158,11 +158,13 @@ for delay_days in range(dispatch_delay_tp, 365):
         if payback_months <= target_payback:
             optimal_date = shifted_date
             rev_stream = rev_stream_tmp
+            payback_months_result = payback_months
+            payback_day_result = payback_idx + 1
             break
 
 if optimal_date:
     st.success(f"✅ Optimal Repair Date: {optimal_date.strftime('%Y-%m-%d')}")
-    st.info(f"⏳ Payback in {total_days} days ({payback_months:.2f} months)")
+    st.info(f"⏳ Payback in {total_days} days ({payback_months_result:.2f} months)")
     st.info(f"🔢 Strings Down: {strings_tp}")
     st.info(f"💰 Repair Cost: ${repair_cost:,.0f}")
 else:
@@ -183,11 +185,15 @@ if rev_stream:
         line=dict(color='green')
     ))
 
+    # Horizontal line → Repair Cost
     fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red',
                      annotation_text=f'Repair Cost (${repair_cost:,.0f})', annotation_position='top left')
 
-    fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red')
-    fig_tp.add_hline(y=repair_cost, line_dash='dash', line_color='red')
+    # Vertical line → Payback Crossover
+    if optimal_date:
+        payback_months_line = payback_day_result / 30.44
+        fig_tp.add_vline(x=payback_months_line, line_dash='dot', line_color='blue',
+                         annotation_text=f'Payback: {payback_months_line:.2f} mo', annotation_position='bottom right')
 
     fig_tp.update_layout(
         title="Cumulative Revenue vs Target Payback",
@@ -199,6 +205,7 @@ if rev_stream:
     )
 
     st.plotly_chart(fig_tp, use_container_width=True)
+
 
 
 
